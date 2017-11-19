@@ -28,7 +28,7 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
 <script type="text/javascript" src="{{asset('resources/views/admin/static/lib/jquery/1.9.1/jquery.min.js')}}"></script>
 ```
 ### 五、控制器接收视图的数据
-* 全部数据
+* 接收全部数据
 ```php
  $input=Input::all();
  ```
@@ -46,7 +46,7 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
  ```php
  {{$data->links()}}
  ```
- ### 七、session的使用(自带是120s)，在config目录下sesion.php可以修改
+ ### 六、session的使用(自带是120s)，在config目录下sesion.php可以修改
  ```php
  (1)首先要在根目录的index.php开启session服务,session_start();
  (2)然后控制器采可以存放session值，
@@ -63,7 +63,12 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
  (5)视图获取session，
  {{ Session::get('nickname') }}
  ```
- ### 六、添加数据(orm方法)
+ ### 七、添加数据create方法(orm模式),并结合validator验证数据
+ `注意：要先设定好模型的fillable属性(支持操作)或者guarded属性(不支持操作)，这样的目的是为了防止用户随意修改某些属性`
+ ```php
+ protected $fillable=['name','age'];//允许操作的字段
+ protected $guarded=[]; //不允许操作的字段 
+ ```
  * 首先要新建一个model，此例为article
  ```php
  使用atrisan创建model
@@ -103,7 +108,32 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
     @endif
 @endif
 ```
- ### 六、查询数据(orm方法)
+### 八、删除某条记录delete方法(orm模式)
+```php
+$res=Article::where('article_id',$article_id)->delete();//找到对应的article_id执行删除
+if($res){
+    return redirect('admin/article/index');//如果删除成功返回主页
+}else{
+    return back()->with('errors','更新失败');//否则提示删除失败
+}
+```
+### 九、更新数据save方法(orm模式)
+(1)选择要修改的记录
+```php
+$field=Article::find($article_id);//查找对应的记录
+return view('edit',compact('field'));//把查到的记录数据传到视图
+```
+(2)执行更新
+```php
+$input=Input::except('_token','_method');//接收除了_token、_method字段外的数据
+$res=Article::where('article_id',$article_id)->save($input);//找到对应的article_id执行修改
+if($res){
+    return redirect('admin/article/index');//如果修改成功返回主页
+}else{
+    return back()->with('errors','更新失败');//否则提示更新失败
+}
+```
+ ### 十、查询数据(orm模式)
  `注意一：model模型的名字的复数会默认是查询表。如模型名称user会默认是users表，可以按下面修改`
  ```php
  protected $table = 'admin_user';//这是操作表
@@ -136,28 +166,5 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
   $q->where('content','like','_me%');
  })
  ```
-### 七、更新数据(orm方法)
-(1)选择要修改的记录
-```php
-$field=Article::find($article_id);//查找对应的记录
-return view('edit',compact('field'));//把查到的记录数据传到视图
-```
-(2)执行更新
-```php
-$input=Input::except('_token','_method');//接收除了_token、_method字段外的数据
-$res=Article::where('article_id',$article_id)->update($input);//找到对应的article_id执行修改
-if($res){
-    return redirect('admin/article/index');//如果修改成功返回主页
-}else{
-    return back()->with('errors','更新失败');//否则提示更新失败
-}
-```
-### 八、删除某条记录(orm方法)
-```php
-$res=Article::where('article_id',$article_id)->delete();//找到对应的article_id执行删除
-if($res){
-    return redirect('admin/article/index');//如果删除成功返回主页
-}else{
-    return back()->with('errors','更新失败');//否则提示删除失败
-}
-```
+
+
