@@ -27,7 +27,44 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
 ```php
 <script type="text/javascript" src="{{asset('resources/views/admin/static/lib/jquery/1.9.1/jquery.min.js')}}"></script>
 ```
-### 五、控制器接收视图的数据
+### 五、路由中间件的使用(限制活动开始为例)
+(1)新建一条中间件路由
+```php
+在Kernel.php的 protected $routeMiddleware = [];加上下面这句
+'activity' => \App\Http\Middleware\Activity::class,
+```
+(2)新建两条活动路由，一条是未开始的，一条是开始的
+```
+Route::any('start',['uses'=>'ActivityController@start']);//活动开始
+Route::group(['middleware'=>['activity']],function(){
+    Route::any('unsatrt',['uses'=>'ActivityController@unstart']);//活动未开始
+});
+```
+(3)新建中间件文件写验证规则
+```php
+在Middleware目录下新建Activity.php文件，并写上以下
+use Closure;
+class Activity{
+    public function handle($request, Closure $next){
+        if(time()<strtotime('2017-11-11')){
+            return redirect('unstart');//如果时间未到11月11日就跳会unstart页面提示为开始
+        }
+        return $next($request);
+    }
+}
+```
+(3)控制器的start和unstart方法
+```php
+  public function unstart(){
+       return '活动尚未开始，~请稍等~';
+    }
+
+    public function start(){
+        return '活动正在进行';
+    }
+```
+(4)直接访问start路由，如果在时间大于11月11日就可以进入活动开始页面，否则进入活动为开始页面
+### 六、控制器接收视图的数据
 * 接收全部数据
 ```php
  $input=Input::all();
@@ -46,7 +83,7 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
  ```php
  {{$data->links()}}
  ```
- ### 六、session的使用(自带是120s)，在config目录下sesion.php可以修改
+ ### 七、session的使用(自带是120s)，在config目录下sesion.php可以修改
  ```php
  (1)首先要在根目录的index.php开启session服务,session_start();
  (2)然后控制器采可以存放session值，
@@ -63,7 +100,7 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
  (5)视图获取session，
  {{ Session::get('nickname') }}
  ```
- ### 七、添加数据create方法(orm模式),并结合validator验证数据
+ ### 八、添加数据create方法(orm模式),并结合validator验证数据
  `注意：要先设定好模型的fillable属性(支持操作)或者guarded属性(不支持操作)，这样的目的是为了防止用户随意修改某些属性`
  ```php
  protected $fillable=['name','age'];//允许操作的字段
@@ -108,7 +145,7 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
     @endif
 @endif
 ```
-### 八、删除某条记录delete方法(orm模式)
+### 九、删除某条记录delete方法(orm模式)
 ```php
 $res=Article::where('article_id',$article_id)->delete();//找到对应的article_id执行删除
 if($res){
@@ -117,7 +154,7 @@ if($res){
     return back()->with('errors','更新失败');//否则提示删除失败
 }
 ```
-### 九、更新数据save方法(orm模式)
+### 十、更新数据save方法(orm模式)
 (1)选择要修改的记录
 ```php
 $field=Article::find($article_id);//查找对应的记录
@@ -133,7 +170,7 @@ if($res){
     return back()->with('errors','更新失败');//否则提示更新失败
 }
 ```
- ### 十、查询数据(orm模式)
+ ### 十一、查询数据(orm模式)
  `注意一：model模型的名字的复数会默认是查询表。如模型名称user会默认是users表，可以按下面修改`
  ```php
  protected $table = 'admin_user';//这是操作表
@@ -166,5 +203,11 @@ if($res){
   $q->where('content','like','_me%');
  })
  ```
-
-
+ ### 十二、DB查询构造器
+ (1)$data = DB::table('user')->get();
+ (2)$data = DB::table('user')->where('name', 'John')->get();
+ (3)$users = DB::table('users')
+            ->join('contacts', 'users.id', '=', 'contacts.user_id')
+            ->join('orders', 'users.id', '=', 'orders.user_id')
+            ->select('users.*', 'contacts.phone', 'orders.price')
+            ->get();
