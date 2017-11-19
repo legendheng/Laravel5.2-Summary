@@ -37,7 +37,7 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
  $input=Input::except('_token','_method');
  ```
  * 分页显示
- (1)控制器部分
+ (1)控制器部分(orm方法)
  ```php
  $data=Article::orderby('article_id','desc')->paginate(5);//根据article_id降序查询，每页显示5条数据
  return view('admin/article/index',compact('data'));//把数据传到视图
@@ -63,7 +63,7 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
  (5)视图获取session，
  {{ Session::get('nickname') }}
  ```
- ### 六、添加数据
+ ### 六、添加数据(orm方法)
  * 首先要新建一个model，此例为article
  ```php
  使用atrisan创建model
@@ -103,7 +103,40 @@ return back()->with('message','用户名或者密码错误');//返回原来的�
     @endif
 @endif
 ```
-### 七、更新数据
+ ### 六、查询数据(orm方法)
+ `注意一：model模型的名字的复数会默认是查询表。如模型名称user会默认是users表，可以按下面修改`
+ ```php
+ protected $table = 'admin_user';//这是操作表
+ protected $primarykey = 'id';//设置主键
+ ```
+ `注意二：默认情况下表是需要有update_at、created_at这两个字段的，用于自动存时间戳，不需要时可以按下面修改`
+ ```php
+ protected $timestamps = fales;
+ ```
+ * 查询所有模型数据
+ ```php
+ $data=Article::all();
+ ```
+ * 条件查询
+ ```php
+ $data=Article::where('view'.'>',100)->get();
+ ```
+ * 拆分查询(可以减少内存一下子的消耗量)
+ ```php
+ Article::chunk(500,function($student){
+     var_dump($student);  //每次取出500条记录
+ }) ;
+ * 查询comment字段存在值的记录
+ ```php
+ $data=Article::has('comment')->get();
+ ```
+ * 模糊查询
+ ```php
+ $data=Article::whereHas('comment',function($q){
+  $q->where('content','like','_me%');
+ })
+ ```
+### 七、更新数据(orm方法)
 (1)选择要修改的记录
 ```php
 $field=Article::find($article_id);//查找对应的记录
@@ -119,7 +152,7 @@ if($res){
     return back()->with('errors','更新失败');//否则提示更新失败
 }
 ```
-### 八、删除某条记录
+### 八、删除某条记录(orm方法)
 ```php
 $res=Article::where('article_id',$article_id)->delete();//找到对应的article_id执行删除
 if($res){
